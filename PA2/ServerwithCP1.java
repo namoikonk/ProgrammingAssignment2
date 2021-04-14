@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.Key;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
@@ -26,6 +27,11 @@ public class ServerwithCP1 {
         //obtain server certificate
         InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
         X509Certificate ServerCert = ClientwithCP1.getCertificate(fis);
+        System.out.println(ServerCert.getPublicKey());
+//        PublicKey serverPublicKey;
+//        serverPublicKey = PublicKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\public_key.der");
+//        System.out.println(serverPublicKey);
+
 
         //extract private key from file
         PrivateKey serverPrivateKey;
@@ -81,7 +87,9 @@ public class ServerwithCP1 {
                 else if (packetType==2){
                     System.out.println("client requested for authentication");
                     String nonce = fromClient.readUTF();
+                    System.out.println(nonce);
                     String encryptednonce = Base64.getEncoder().encodeToString(encrypt(nonce.getBytes(), serverPrivateKey));
+                    System.out.println(encryptednonce);
                     toClient.writeUTF(encryptednonce);
                     System.out.println("sent encrypted nonce");
                 }

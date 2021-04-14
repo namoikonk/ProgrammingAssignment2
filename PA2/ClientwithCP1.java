@@ -89,7 +89,8 @@ public class ClientwithCP1 {
 
             //decrypt and compare nonce with decryptednonce
             String decryptednonce = Base64.getEncoder().encodeToString(decrypt(Base64.getDecoder().decode(encryptednonce), serverPublicKey));
-            if(!decryptednonce.equals(nonce)){
+            System.out.println(decryptednonce);
+            if(decryptednonce.equals(nonce)){
                 //close server connection
                 toServer.writeInt(4);
                 System.out.println("Not Authentic Server, Closing Connection...");
