@@ -1,9 +1,13 @@
+import javax.crypto.Cipher;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Key;
+import java.security.PrivateKey;
+import java.util.Base64;
 
 public class ServerWithoutSecurity {
 
@@ -21,6 +25,8 @@ public class ServerWithoutSecurity {
 		BufferedOutputStream bufferedFileOutputStream = null;
 
 		try {
+
+
 			welcomeSocket = new ServerSocket(port);
 			connectionSocket = welcomeSocket.accept();
 			fromClient = new DataInputStream(connectionSocket.getInputStream());
@@ -65,9 +71,11 @@ public class ServerWithoutSecurity {
 					}
 				}
 
+
 			}
 		} catch (Exception e) {e.printStackTrace();}
 
 	}
+
 
 }

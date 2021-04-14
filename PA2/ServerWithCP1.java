@@ -1,15 +1,16 @@
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
+import javax.crypto.Cipher;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Key;
 import java.security.PrivateKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 
 public class ServerWithCP1 {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         int port = 4321;
         if (args.length > 0) port = Integer.parseInt(args[0]);
@@ -22,7 +23,18 @@ public class ServerWithCP1 {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedFileOutputStream = null;
 
+        //obtain server certificate
+        InputStream fis = new FileInputStream("docs2/certificate_1004286.crt");
+        X509Certificate ServerCert = ClientwithCP1.getCertificate(fis);
+
+        //extract private key from file
+        PrivateKey serverPrivateKey;
+        serverPrivateKey = PrivateKeyReader.get("docs2/private_key.der");
+        System.out.println(serverPrivateKey);
+
+
         try {
+
             welcomeSocket = new ServerSocket(port);
             connectionSocket = welcomeSocket.accept();
             fromClient = new DataInputStream(connectionSocket.getInputStream());
@@ -72,17 +84,42 @@ public class ServerWithCP1 {
                         connectionSocket.close();
                     }
                 }
+                //If packet is requesting encrypted nonce
                 else if (packetType==2){
                     System.out.println("client requested for authentication");
-                    clientMessage = fromClient.readUTF();
-                    //String encryptedClientMessage = Base64.getEncoder().encodeToString(RSA.encrypt(clientMessage.getBytes(), sKey));
-                    //toClient.writeUTF(encryptedClientMessage);
-                    System.out.println();
+                    String nonce = fromClient.readUTF();
+                    String encryptednonce = Base64.getEncoder().encodeToString(encrypt(nonce.getBytes(), serverPrivateKey));
+                    toClient.writeUTF(encryptednonce);
+                    System.out.println("sent encrypted nonce");
+                }
+                //If packet is requesting for server certificate
+                else if (packetType==3){
+                    System.out.println("client requested for authentication");
+                    toClient.writeUTF(Base64.getEncoder().encodeToString(ServerCert.getEncoded()));
+                }
+                //If packet sends data that client closed connection
+                else if (packetType==4){
+                    System.out.println("Invalid Authentication, client has closed connection.");
                 }
 
             }
         } catch (Exception e) {e.printStackTrace();}
 
+    }
+
+    public static byte[] encrypt(byte[] byteArray, Key key) throws Exception {
+        // instantiate cipher
+        Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        rsaCipher.init(Cipher.ENCRYPT_MODE, key);
+        // System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
+
+
+        // encrypt message
+        byte[] encryptedBytesArray = rsaCipher.doFinal(byteArray);
+        // System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
+        // + encryptedBytesArray.length);
+
+        return encryptedBytesArray;
     }
 
 }

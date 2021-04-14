@@ -1,3 +1,4 @@
+import javax.crypto.Cipher;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -18,11 +19,12 @@ import java.util.Base64;
 
 
 public class ClientwithCP1 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
-        //get server's public key
-        getPublicKey("docs2/certificate_1004286.crt");
-
+        //get CA's public key for verification
+        InputStream fis = new FileInputStream("docs2/cacsecertificate.crt");
+        X509Certificate CAcert = getCertificate(fis);
+        PublicKey CAKey = CAcert.getPublicKey();
 
 
         String filename = "100.txt";
@@ -47,6 +49,46 @@ public class ClientwithCP1 {
         long timeStarted = System.nanoTime();
 
         try {
+            System.out.println("Autheniticating...");
+
+            //send nonce to server and request for encrypted nonce
+            toServer.writeInt(2);
+            String nonce = RandomString.nextString();
+            System.out.println(nonce);
+            toServer.writeUTF(nonce);
+
+            //receive encrypted nonce with server's private key
+            String encryptedMessage = fromServer.readUTF();
+
+            //ask for signed certificate
+            toServer.writeInt(3);
+            System.out.println("requesting server certificate");
+            String certString = fromServer.readUTF();
+
+            //create X509Certificate object
+            byte[] bytes = Base64.getDecoder().decode(certString);
+            InputStream bis = new ByteArrayInputStream(bytes);
+
+            X509Certificate ServerCert = getCertificate(bis);
+
+            // get server public key
+            PublicKey serverPublicKey = ServerCert.getPublicKey();
+            System.out.println("serverPublicKey: " + serverPublicKey);
+
+            //verify signed certificate
+            ServerCert.checkValidity();
+            ServerCert.verify(CAKey);
+
+            //decrypt and compare nonce with decryptednonce
+            String decryptednonce = Base64.getEncoder().encodeToString(decrypt(Base64.getDecoder().decode(encryptedMessage), serverPublicKey));
+            if(decryptednonce!= nonce){
+                //close server connection
+                toServer.writeInt(4);
+                System.out.println("Not Authentic Server, Closing Connection...");
+                return;
+            }
+
+            System.out.println("Server's certificate is verified!");
 
             System.out.println("Establishing connection to server...");
 
@@ -93,24 +135,36 @@ public class ClientwithCP1 {
         System.out.println("Program took: " + timeTaken / 1000000.0 + "ms to run");
     }
 
-    //get Server's public key
-    public static void getPublicKey(String file){
+    public static X509Certificate getCertificate(InputStream is) throws CertificateException {
+        X509Certificate CAcert = null;
         try {
-            InputStream fis = new FileInputStream(file);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate CAcert = (X509Certificate) cf.generateCertificate(fis);
-            PublicKey key = CAcert.getPublicKey();
-            CAcert.checkValidity();
-            CAcert.verify(key);
+            CAcert = (X509Certificate) cf.generateCertificate(is);
+
         } catch (CertificateException e) {
-            System.out.println("Unable to generate certificate");
-
-        } catch(FileNotFoundException e){
-            System.out.println("Invalid file input");
-
-        } catch (Exception e) {
-            System.out.println("Verification failed");
+            System.out.println("certificate expired");
 
         }
+
+
+        return CAcert;
     }
+
+
+    public static byte[] decrypt(byte[] byteArray, Key key) throws Exception {
+        // instantiate cypher
+        Cipher desCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        desCipher.init(Cipher.DECRYPT_MODE, key);
+
+        // System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
+
+        // decrypt message
+        byte[] decryptedBytesArray = desCipher.doFinal(byteArray);
+        // System.out.println("decryptedBytesArray: " + decryptedBytesArray + "\nLength of decryptedBytesArray: "
+        // + decryptedBytesArray.length);
+
+        return decryptedBytesArray;
+    }
+
+
 }
