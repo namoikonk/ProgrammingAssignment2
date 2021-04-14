@@ -16,13 +16,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Random;
 
 
 public class ClientwithCP1 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
         //get CA's public key for verification
-        InputStream fis = new FileInputStream("docs2/cacsecertificate.crt");
+        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
         X509Certificate CAcert = getCertificate(fis);
         PublicKey CAKey = CAcert.getPublicKey();
 
@@ -33,7 +34,7 @@ public class ClientwithCP1 {
         String serverAddress = "localhost";
         if (args.length > 1) filename = args[1];
 
-        int port = 4321;
+        int port = 8080;
         if (args.length > 2) port = Integer.parseInt(args[2]);
 
         int numBytes = 0;
@@ -49,16 +50,23 @@ public class ClientwithCP1 {
         long timeStarted = System.nanoTime();
 
         try {
+            System.out.println("Connecting to server...");
+            clientSocket = new Socket(serverAddress,port);
+            toServer = new DataOutputStream(clientSocket.getOutputStream());
+            fromServer = new DataInputStream(clientSocket.getInputStream());
+
+
             System.out.println("Autheniticating...");
 
             //send nonce to server and request for encrypted nonce
             toServer.writeInt(2);
-            String nonce = RandomString.nextString();
+            Random rand = new Random();
+            String nonce = generateString(rand,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",8);
             System.out.println(nonce);
             toServer.writeUTF(nonce);
 
             //receive encrypted nonce with server's private key
-            String encryptedMessage = fromServer.readUTF();
+            String encryptednonce = fromServer.readUTF();
 
             //ask for signed certificate
             toServer.writeInt(3);
@@ -80,8 +88,8 @@ public class ClientwithCP1 {
             ServerCert.verify(CAKey);
 
             //decrypt and compare nonce with decryptednonce
-            String decryptednonce = Base64.getEncoder().encodeToString(decrypt(Base64.getDecoder().decode(encryptedMessage), serverPublicKey));
-            if(decryptednonce!= nonce){
+            String decryptednonce = Base64.getEncoder().encodeToString(decrypt(Base64.getDecoder().decode(encryptednonce), serverPublicKey));
+            if(!decryptednonce.equals(nonce)){
                 //close server connection
                 toServer.writeInt(4);
                 System.out.println("Not Authentic Server, Closing Connection...");
@@ -150,7 +158,6 @@ public class ClientwithCP1 {
         return CAcert;
     }
 
-
     public static byte[] decrypt(byte[] byteArray, Key key) throws Exception {
         // instantiate cypher
         Cipher desCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -164,6 +171,15 @@ public class ClientwithCP1 {
         // + decryptedBytesArray.length);
 
         return decryptedBytesArray;
+    }
+    public static String generateString(Random rng, String characters, int length)
+    {
+        char[] text = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            text[i] = characters.charAt(rng.nextInt(characters.length()));
+        }
+        return new String(text);
     }
 
 
