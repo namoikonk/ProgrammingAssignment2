@@ -5,7 +5,6 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.net.Socket;
 import java.io.*;
-import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -20,24 +19,26 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
-
 public class ClientwithCP1 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
-        //get CA's public key for verification
-        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
+        // get CA's public key for verification
+        InputStream fis = new FileInputStream(
+                "C:\\Users\\User\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
         X509Certificate CAcert = getCertificate(fis);
         PublicKey CAKey = CAcert.getPublicKey();
 
-
         String filename = "100.txt";
-        if (args.length > 0) filename = args[0];
+        if (args.length > 0)
+            filename = args[0];
 
         String serverAddress = "localhost";
-        if (args.length > 1) filename = args[1];
+        if (args.length > 1)
+            filename = args[1];
 
         int port = 8080;
-        if (args.length > 2) port = Integer.parseInt(args[2]);
+        if (args.length > 2)
+            port = Integer.parseInt(args[2]);
 
         int numBytes = 0;
 
@@ -54,31 +55,30 @@ public class ClientwithCP1 {
         try {
             // Connect to server and get the input and output streams
             System.out.println("Connecting to server...");
-            clientSocket = new Socket(serverAddress,port);
+            clientSocket = new Socket(serverAddress, port);
             toServer = new DataOutputStream(clientSocket.getOutputStream());
             fromServer = new DataInputStream(clientSocket.getInputStream());
 
+            System.out.println("Authenticating...");
 
-            System.out.println("Autheniticating...");
-
-            //send nonce to server and request for encrypted nonce
+            // send nonce to server and request for encrypted nonce
             toServer.writeInt(2);
             Random rand = new Random();
-            String nonce = generateString(rand,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",8);
+            String nonce = generateString(rand, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
             System.out.println(nonce);
             toServer.writeUTF(nonce);
 
-            //receive encrypted nonce with server's private key
+            // receive encrypted nonce with server's private key
             byte[] encryptednonce = new byte[128];
-            int no_bytes_read= fromServer.read(encryptednonce);
+            int no_bytes_read = fromServer.read(encryptednonce);
             System.out.println(no_bytes_read);
 
-            //ask for signed certificate
+            // ask for signed certificate
             toServer.writeInt(3);
-            System.out.println("requesting server certificate");
+            System.out.println("Requesting server certificate");
             String certString = fromServer.readUTF();
 
-            //create X509Certificate object
+            // create X509Certificate object
             byte[] bytes = Base64.getDecoder().decode(certString);
             InputStream bis = new ByteArrayInputStream(bytes);
 
@@ -88,17 +88,17 @@ public class ClientwithCP1 {
             PublicKey serverPublicKey = ServerCert.getPublicKey();
             System.out.println("serverPublicKey: " + serverPublicKey);
 
-            //verify signed certificate
+            // verify signed certificate
             ServerCert.checkValidity();
             ServerCert.verify(CAKey);
 
-            //decrypt and compare nonce with decryptednonce
-            byte[] decryptednonce = decrypt(encryptednonce,serverPublicKey);
+            // decrypt and compare nonce with decryptednonce
+            byte[] decryptednonce = decrypt(encryptednonce, serverPublicKey);
 
-            if(!equalsNonce(nonce.getBytes(),decryptednonce)){
-                //close server connection
+            if (!equalsNonce(nonce.getBytes(), decryptednonce)) {
+                // close server connection if verification fails
                 toServer.writeInt(4);
-                System.out.println("Not Authentic Server, Closing Connection...");
+                System.out.println("Not authentic server, closing connection...");
                 return;
             }
 
@@ -106,39 +106,39 @@ public class ClientwithCP1 {
 
             System.out.println("Establishing connection to server...");
 
-
-            /*for (int i = 0; i < args.length; i++) {
-
-                String filename = args[i];
-            }*/
+            /*
+             * for (int i = 0; i < args.length; i++) {
+             * 
+             * String filename = args[i]; }
+             */
 
             System.out.println("Sending file...");
 
-            // Send the filename
+            // send the filename
             toServer.writeInt(0);
             toServer.writeInt(filename.getBytes().length);
             toServer.write(filename.getBytes());
-            //toServer.flush();
+            // toServer.flush();
 
-            // Open the file
+            // open the file
             fileInputStream = new FileInputStream(filename);
             bufferedFileInputStream = new BufferedInputStream(fileInputStream);
 
             byte[] fromFileBuffer = new byte[117];
 
-            int packet =0;
-            // Send the file
-            for (boolean fileEnded = false; !fileEnded; ) {
+            int packet = 0;
+            // send the file
+            for (boolean fileEnded = false; !fileEnded;) {
                 numBytes = bufferedFileInputStream.read(fromFileBuffer);
                 fileEnded = numBytes < 117;
 
                 toServer.writeInt(1);
 
-                //encrypt file
+                // encrypt file
                 byte[] encryptedfromFileBuffer = encrypt(fromFileBuffer, serverPublicKey);
                 int encyrptednumBytes = encryptedfromFileBuffer.length;
 
-                //send encrypted file
+                // send encrypted file
                 toServer.writeInt(encyrptednumBytes);
                 toServer.write(encryptedfromFileBuffer);
                 toServer.flush();
@@ -166,13 +166,14 @@ public class ClientwithCP1 {
             CAcert = (X509Certificate) cf.generateCertificate(is);
 
         } catch (CertificateException e) {
-            System.out.println("certificate expired");
+            System.out.println("Certificate expired");
 
         }
 
-
         return CAcert;
     }
+
+    // global functions
 
     public static byte[] encrypt(byte[] byteArray, Key key) throws Exception {
         // instantiate cipher
@@ -191,18 +192,17 @@ public class ClientwithCP1 {
         // decrypt message
         return decipher.doFinal(byteArray);
     }
-    public static String generateString(Random rng, String characters, int length)
-    {
+
+    public static String generateString(Random rng, String characters, int length) {
         char[] text = new char[length];
-        for (int i = 0; i < length; i++)
-        {
+        for (int i = 0; i < length; i++) {
             text[i] = characters.charAt(rng.nextInt(characters.length()));
         }
         return new String(text);
     }
-    public static boolean equalsNonce(byte[] nonce,byte[] decryptedNonce){
-        return Arrays.equals(nonce,decryptedNonce);
-    }
 
+    public static boolean equalsNonce(byte[] nonce, byte[] decryptedNonce) {
+        return Arrays.equals(nonce, decryptedNonce);
+    }
 
 }
