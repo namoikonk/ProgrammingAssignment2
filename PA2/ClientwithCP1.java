@@ -52,6 +52,7 @@ public class ClientwithCP1 {
         long timeStarted = System.nanoTime();
 
         try {
+            // Connect to server and get the input and output streams
             System.out.println("Connecting to server...");
             clientSocket = new Socket(serverAddress,port);
             toServer = new DataOutputStream(clientSocket.getOutputStream());
@@ -105,10 +106,11 @@ public class ClientwithCP1 {
 
             System.out.println("Establishing connection to server...");
 
-            // Connect to server and get the input and output streams
-            clientSocket = new Socket(serverAddress, port);
-            toServer = new DataOutputStream(clientSocket.getOutputStream());
-            fromServer = new DataInputStream(clientSocket.getInputStream());
+
+            /*for (int i = 0; i < args.length; i++) {
+
+                String filename = args[i];
+            }*/
 
             System.out.println("Sending file...");
 
@@ -124,15 +126,24 @@ public class ClientwithCP1 {
 
             byte[] fromFileBuffer = new byte[117];
 
+            int packet =0;
             // Send the file
             for (boolean fileEnded = false; !fileEnded; ) {
                 numBytes = bufferedFileInputStream.read(fromFileBuffer);
                 fileEnded = numBytes < 117;
 
                 toServer.writeInt(1);
-                toServer.writeInt(numBytes);
-                toServer.write(fromFileBuffer);
+
+                //encrypt file
+                byte[] encryptedfromFileBuffer = encrypt(fromFileBuffer, serverPublicKey);
+                int encyrptednumBytes = encryptedfromFileBuffer.length;
+
+                //send encrypted file
+                toServer.writeInt(encyrptednumBytes);
+                toServer.write(encryptedfromFileBuffer);
                 toServer.flush();
+
+                packet++;
             }
 
             bufferedFileInputStream.close();
@@ -161,6 +172,15 @@ public class ClientwithCP1 {
 
 
         return CAcert;
+    }
+
+    public static byte[] encrypt(byte[] byteArray, Key key) throws Exception {
+        // instantiate cipher
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+
+        // encrypt message
+        return cipher.doFinal(byteArray);
     }
 
     public static byte[] decrypt(byte[] byteArray, Key key) throws Exception {
