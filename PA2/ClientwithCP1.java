@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.net.Socket;
 import java.io.*;
 import java.nio.*;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.*;
@@ -15,6 +16,7 @@ import java.security.cert.X509Certificate;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
@@ -66,7 +68,9 @@ public class ClientwithCP1 {
             toServer.writeUTF(nonce);
 
             //receive encrypted nonce with server's private key
-            String encryptednonce = fromServer.readUTF();
+            byte[] encryptednonce = new byte[128];
+            int no_bytes_read= fromServer.read(encryptednonce);
+            System.out.println(no_bytes_read);
 
             //ask for signed certificate
             toServer.writeInt(3);
@@ -88,9 +92,9 @@ public class ClientwithCP1 {
             ServerCert.verify(CAKey);
 
             //decrypt and compare nonce with decryptednonce
-            String decryptednonce = Base64.getEncoder().encodeToString(decrypt(Base64.getDecoder().decode(encryptednonce), serverPublicKey));
-            System.out.println(decryptednonce);
-            if(decryptednonce.equals(nonce)){
+            byte[] decryptednonce = decrypt(encryptednonce,serverPublicKey);
+
+            if(!equalsNonce(nonce.getBytes(),decryptednonce)){
                 //close server connection
                 toServer.writeInt(4);
                 System.out.println("Not Authentic Server, Closing Connection...");
@@ -161,17 +165,11 @@ public class ClientwithCP1 {
 
     public static byte[] decrypt(byte[] byteArray, Key key) throws Exception {
         // instantiate cypher
-        Cipher desCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        desCipher.init(Cipher.DECRYPT_MODE, key);
-
-        // System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
+        Cipher decipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        decipher.init(Cipher.DECRYPT_MODE, key);
 
         // decrypt message
-        byte[] decryptedBytesArray = desCipher.doFinal(byteArray);
-        // System.out.println("decryptedBytesArray: " + decryptedBytesArray + "\nLength of decryptedBytesArray: "
-        // + decryptedBytesArray.length);
-
-        return decryptedBytesArray;
+        return decipher.doFinal(byteArray);
     }
     public static String generateString(Random rng, String characters, int length)
     {
@@ -181,6 +179,9 @@ public class ClientwithCP1 {
             text[i] = characters.charAt(rng.nextInt(characters.length()));
         }
         return new String(text);
+    }
+    public static boolean equalsNonce(byte[] nonce,byte[] decryptedNonce){
+        return Arrays.equals(nonce,decryptedNonce);
     }
 
 

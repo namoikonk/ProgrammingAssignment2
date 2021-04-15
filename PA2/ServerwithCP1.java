@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class ServerwithCP1 {
@@ -88,9 +89,9 @@ public class ServerwithCP1 {
                     System.out.println("client requested for authentication");
                     String nonce = fromClient.readUTF();
                     System.out.println(nonce);
-                    String encryptednonce = Base64.getEncoder().encodeToString(encrypt(nonce.getBytes(), serverPrivateKey));
-                    System.out.println(encryptednonce);
-                    toClient.writeUTF(encryptednonce);
+                    byte[] encryptednonce = encrypt(nonce.getBytes(), serverPrivateKey);
+                    System.out.println(Arrays.toString(encryptednonce));
+                    toClient.write(encryptednonce);
                     System.out.println("sent encrypted nonce");
                 }
                 //If packet is requesting for server certificate
@@ -110,17 +111,11 @@ public class ServerwithCP1 {
 
     public static byte[] encrypt(byte[] byteArray, Key key) throws Exception {
         // instantiate cipher
-        Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        rsaCipher.init(Cipher.ENCRYPT_MODE, key);
-        // System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
-
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
 
         // encrypt message
-        byte[] encryptedBytesArray = rsaCipher.doFinal(byteArray);
-        // System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
-        // + encryptedBytesArray.length);
-
-        return encryptedBytesArray;
+        return cipher.doFinal(byteArray);
     }
 
 }
