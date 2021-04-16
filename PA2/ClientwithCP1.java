@@ -23,22 +23,25 @@ public class ClientwithCP1 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
         // get CA's public key for verification
-        InputStream fis = new FileInputStream(
-                "C:\\Users\\User\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
+        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
         X509Certificate CAcert = getCertificate(fis);
         PublicKey CAKey = CAcert.getPublicKey();
 
-        String filename = "100.txt";
+        /*String filename = "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\500.txt";
         if (args.length > 0)
-            filename = args[0];
+            filename = args[0];*/
 
         String serverAddress = "localhost";
-        if (args.length > 1)
-            filename = args[1];
+        /*if (args.length > 1)
+            filename = args[1];*/
 
         int port = 8080;
-        if (args.length > 2)
-            port = Integer.parseInt(args[2]);
+        for(int i = 0; i < args.length; i++) {
+            if (args[i].equals("port")) {
+                port = Integer.parseInt(args[i + 1]);
+            }
+        }
+
 
         int numBytes = 0;
 
@@ -106,50 +109,53 @@ public class ClientwithCP1 {
 
             System.out.println("Establishing connection to server...");
 
-            /*
-             * for (int i = 0; i < args.length; i++) {
-             * 
-             * String filename = args[i]; }
-             */
+            for (int i = 0; i < args.length; i++) {
+                String filename = args[i];
+                System.out.println("Sending file...");
 
-            System.out.println("Sending file...");
-
-            // send the filename
-            toServer.writeInt(0);
-            toServer.writeInt(filename.getBytes().length);
-            toServer.write(filename.getBytes());
-            // toServer.flush();
-
-            // open the file
-            fileInputStream = new FileInputStream(filename);
-            bufferedFileInputStream = new BufferedInputStream(fileInputStream);
-
-            byte[] fromFileBuffer = new byte[117];
-
-            int packet = 0;
-            // send the file
-            for (boolean fileEnded = false; !fileEnded;) {
-                numBytes = bufferedFileInputStream.read(fromFileBuffer);
-                fileEnded = numBytes < 117;
-
-                toServer.writeInt(1);
-
-                // encrypt file
-                byte[] encryptedfromFileBuffer = encrypt(fromFileBuffer, serverPublicKey);
-                int encyrptednumBytes = encryptedfromFileBuffer.length;
-
-                // send encrypted file
-                toServer.writeInt(encyrptednumBytes);
-                toServer.write(encryptedfromFileBuffer);
+                // send the filename
+                toServer.writeInt(0);
+                toServer.writeInt(filename.getBytes().length);
+                toServer.write(filename.getBytes());
                 toServer.flush();
 
-                packet++;
+                // open the file
+                fileInputStream = new FileInputStream(filename);
+                bufferedFileInputStream = new BufferedInputStream(fileInputStream);
+
+                byte[] fromFileBuffer = new byte[117];
+
+
+                // send the file
+                for (boolean fileEnded = false; !fileEnded; ) {
+                    numBytes = bufferedFileInputStream.read(fromFileBuffer);
+                    fileEnded = numBytes < 117;
+
+                    toServer.writeInt(1);
+
+                    // encrypt file
+                    byte[] encryptedfromFileBuffer = encrypt(fromFileBuffer, serverPublicKey);
+                    int encyrptednumBytes = encryptedfromFileBuffer.length;
+
+                    // send encrypted file
+                    toServer.writeInt(numBytes);
+                    toServer.writeInt(encyrptednumBytes);
+                    toServer.write(encryptedfromFileBuffer);
+                    toServer.flush();
+
+
+                }
+                System.out.println("File sent");
+
+                if (i == args.length - 1) {
+                    System.out.println("Closing connection...");
+                    toServer.writeInt(4);
+                    bufferedFileInputStream.close();
+                    fileInputStream.close();
+                }
+
             }
 
-            bufferedFileInputStream.close();
-            fileInputStream.close();
-
-            System.out.println("Closing connection...");
 
         } catch (Exception e) {
             e.printStackTrace();

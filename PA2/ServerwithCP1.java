@@ -15,7 +15,7 @@ public class ServerwithCP1 {
     public static void main(String[] args) throws Exception {
 
         int port = 8080;
-        if (args.length > 0) port = Integer.parseInt(args[0]);
+        if (args.length > 0) {port = Integer.parseInt(args[0]);}
 
         ServerSocket welcomeSocket = null;
         Socket connectionSocket = null;
@@ -61,27 +61,30 @@ public class ServerwithCP1 {
                     // See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
                     fromClient.readFully(filename, 0, numBytes);
 
-                    fileOutputStream = new FileOutputStream("recv_"+new String(filename, 0, numBytes));
+                    File file = new File(new String(filename,0,numBytes));
+                    fileOutputStream = new FileOutputStream("recv_"+file.getName());
                     bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
 
                     // If the packet is for transferring a chunk of the file
                 } else if (packetType == 1) {
 
                     int numBytes = fromClient.readInt();
-                    byte [] block = new byte[numBytes];
-                    fromClient.readFully(block, 0, numBytes);
+                    int EncryptednumBytes = fromClient.readInt();
+                    byte [] block = new byte[EncryptednumBytes];
+                    fromClient.readFully(block, 0, EncryptednumBytes);
+
+                    byte[] decryptedblock = decrypt(block, serverPrivateKey);
 
                     if (numBytes > 0)
-                        bufferedFileOutputStream.write(block, 0, numBytes);
+                        bufferedFileOutputStream.write(decryptedblock, 0, numBytes);
 
                     if (numBytes < 117) {
-                        System.out.println("Closing connection...");
+
+                        System.out.println("File is received");
 
                         if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
                         if (bufferedFileOutputStream != null) fileOutputStream.close();
-                        fromClient.close();
-                        toClient.close();
-                        connectionSocket.close();
+
                     }
                 }
                 //If packet is requesting encrypted nonce
@@ -101,7 +104,11 @@ public class ServerwithCP1 {
                 }
                 //If packet sends data that client closed connection
                 else if (packetType==4){
-                    System.out.println("Invalid Authentication, client has closed connection.");
+                    System.out.println("Closing connection...");
+                    fromClient.close();
+                    toClient.close();
+                    connectionSocket.close();
+
                 }
 
             }
@@ -116,6 +123,15 @@ public class ServerwithCP1 {
 
         // encrypt message
         return cipher.doFinal(byteArray);
+    }
+
+    public static byte[] decrypt(byte[] byteArray, Key key) throws Exception {
+        // instantiate cypher
+        Cipher decipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        decipher.init(Cipher.DECRYPT_MODE, key);
+
+        // decrypt message
+        return decipher.doFinal(byteArray);
     }
 
 }
