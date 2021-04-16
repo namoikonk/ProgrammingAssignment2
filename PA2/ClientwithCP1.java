@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
+
 public class ClientwithCP1 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
@@ -110,8 +111,15 @@ public class ClientwithCP1 {
             System.out.println("Establishing connection to server...");
 
             for (int i = 0; i < args.length; i++) {
-                String filename = args[i];
                 System.out.println("Sending file...");
+                if(args[i].equals("port")){
+                    toServer.writeInt(4);
+                    bufferedFileInputStream.close();
+                    fileInputStream.close();
+                    break;
+                }
+
+                String filename = args[i];
 
                 // send the filename
                 toServer.writeInt(0);
@@ -210,5 +218,6 @@ public class ClientwithCP1 {
     public static boolean equalsNonce(byte[] nonce, byte[] decryptedNonce) {
         return Arrays.equals(nonce, decryptedNonce);
     }
+
 
 }
