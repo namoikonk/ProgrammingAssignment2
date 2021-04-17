@@ -1,7 +1,9 @@
 import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -10,7 +12,9 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 
-public class ServerwithCP1 {
+public class ServerwithCP2 {
+
+    private static SecretKeySpec AESKey;
 
     public static void main(String[] args) throws Exception {
 
@@ -60,6 +64,7 @@ public class ServerwithCP1 {
                     // Must use read fully!
                     // See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
                     fromClient.readFully(filename, 0, numBytes);
+
                     if(!(new String(filename, 0, numBytes)).equals("port") || !isNumeric(new String(filename, 0, numBytes))) {
                         File file = new File(new String(filename, 0, numBytes));
                         fileOutputStream = new FileOutputStream("recv_" + file.getName());
@@ -74,7 +79,7 @@ public class ServerwithCP1 {
                     byte [] block = new byte[EncryptednumBytes];
                     fromClient.readFully(block, 0, EncryptednumBytes);
 
-                    byte[] decryptedblock = decrypt(block, serverPrivateKey);
+                    byte[] decryptedblock = decrypt2(block, AESKey);
 
                     if (numBytes > 0)
                         bufferedFileOutputStream.write(decryptedblock, 0, numBytes);
@@ -94,7 +99,7 @@ public class ServerwithCP1 {
                     String nonce = fromClient.readUTF();
                     System.out.println(nonce);
                     byte[] encryptednonce = encrypt(nonce.getBytes(), serverPrivateKey);
-                    System.out.println(Arrays.toString(encryptednonce));
+                    //System.out.println(Arrays.toString(encryptednonce));
                     toClient.write(encryptednonce);
                     System.out.println("sent encrypted nonce");
                 }
@@ -110,6 +115,15 @@ public class ServerwithCP1 {
                     toClient.close();
                     connectionSocket.close();
 
+                }
+                //If packet sends symmetric key
+                if (packetType==5){
+                    String symmetric_key = fromClient.readUTF();
+                    System.out.println("symmetric key received");
+                    byte [] symkey = decrypt(Base64.getDecoder().decode(symmetric_key),serverPrivateKey);
+                    AESKey = new SecretKeySpec(symkey, 0, symkey.length, "AES");
+                    symmetric_key = Base64.getEncoder().encodeToString(AESKey.getEncoded());
+                    System.out.println("symKey is: " + symmetric_key);
                 }
 
             }
@@ -134,6 +148,17 @@ public class ServerwithCP1 {
         // decrypt message
         return decipher.doFinal(byteArray);
     }
+
+
+    public static byte[] decrypt2(byte[] byteArray, Key key) throws Exception {
+        // instantiate cypher
+        Cipher decipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        decipher.init(Cipher.DECRYPT_MODE, key);
+
+        // decrypt message
+        return decipher.doFinal(byteArray);
+    }
+
     public static boolean isNumeric(String str) {
         try {
             Double.parseDouble(str);
