@@ -60,10 +60,11 @@ public class ServerwithCP1 {
                     // Must use read fully!
                     // See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
                     fromClient.readFully(filename, 0, numBytes);
-
-                    File file = new File(new String(filename,0,numBytes));
-                    fileOutputStream = new FileOutputStream("recv_"+file.getName());
-                    bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
+                    if(!(new String(filename, 0, numBytes)).equals("port") || !isNumeric(new String(filename, 0, numBytes))) {
+                        File file = new File(new String(filename, 0, numBytes));
+                        fileOutputStream = new FileOutputStream("recv_" + file.getName());
+                        bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
+                    }
 
                     // If the packet is for transferring a chunk of the file
                 } else if (packetType == 1) {
@@ -132,6 +133,14 @@ public class ServerwithCP1 {
 
         // decrypt message
         return decipher.doFinal(byteArray);
+    }
+    public static boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch(NumberFormatException e){
+            return false;
+        }
     }
 
 }
