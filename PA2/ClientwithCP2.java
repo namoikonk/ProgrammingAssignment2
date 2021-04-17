@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
-
 public class ClientwithCP2 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
@@ -43,7 +42,6 @@ public class ClientwithCP2 {
                 port = Integer.parseInt(args[i + 1]);
             }
         }
-
 
         int numBytes = 0;
 
@@ -165,7 +163,6 @@ public class ClientwithCP2 {
                     toServer.write(encryptedfromFileBuffer);
                     toServer.flush();
 
-
                 }
                 System.out.println("File sent");
 
@@ -177,7 +174,6 @@ public class ClientwithCP2 {
                 }
 
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
