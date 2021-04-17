@@ -15,7 +15,9 @@ public class ServerwithCP1 {
     public static void main(String[] args) throws Exception {
 
         int port = 8080;
-        if (args.length > 0) {port = Integer.parseInt(args[0]);}
+        if (args.length > 0) {
+            port = Integer.parseInt(args[0]);
+        }
 
         ServerSocket welcomeSocket = null;
         Socket connectionSocket = null;
@@ -25,26 +27,33 @@ public class ServerwithCP1 {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedFileOutputStream = null;
 
-        //obtain server certificate
-        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
+        // obtain server certificate
+        InputStream fis = new FileInputStream(
+                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/certificate_1004286.crt");
+        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_100428");
+
         X509Certificate ServerCert = ClientwithCP1.getCertificate(fis);
         System.out.println(ServerCert.getPublicKey());
-//        PublicKey serverPublicKey;
-//        serverPublicKey = PublicKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\public_key.der");
-//        System.out.println(serverPublicKey);
+        // PublicKey serverPublicKey;
+        // serverPublicKey =
+        // PublicKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\public_key.der");
+        // System.out.println(serverPublicKey);
 
-
-        //extract private key from file
+        // extract private key from file
         PrivateKey serverPrivateKey;
-        serverPrivateKey = PrivateKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\private_key.der");
-        //System.out.println(serverPrivateKey);
+        serverPrivateKey = PrivateKeyReader
+                .get("C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/private_key.der");
+        // .get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\private_key.der");
 
+        // System.out.println(serverPrivateKey);
 
         try {
             welcomeSocket = new ServerSocket(port);
             connectionSocket = welcomeSocket.accept();
             fromClient = new DataInputStream(connectionSocket.getInputStream());
             toClient = new DataOutputStream(connectionSocket.getOutputStream());
+
+            int packet = 0;
 
             while (!connectionSocket.isClosed()) {
 
@@ -53,14 +62,17 @@ public class ServerwithCP1 {
                 // If the packet is for transferring the filename
                 if (packetType == 0) {
 
+                    packet = 0; // initialize packet size to be 0
                     System.out.println("Receiving file...");
 
                     int numBytes = fromClient.readInt();
-                    byte [] filename = new byte[numBytes];
+                    byte[] filename = new byte[numBytes];
                     // Must use read fully!
-                    // See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
+                    // See:
+                    // https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
                     fromClient.readFully(filename, 0, numBytes);
-                    if(!(new String(filename, 0, numBytes)).equals("port") || !isNumeric(new String(filename, 0, numBytes))) {
+                    if (!(new String(filename, 0, numBytes)).equals("port")
+                            || !isNumeric(new String(filename, 0, numBytes))) {
                         File file = new File(new String(filename, 0, numBytes));
                         fileOutputStream = new FileOutputStream("recv_" + file.getName());
                         bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -71,8 +83,10 @@ public class ServerwithCP1 {
 
                     int numBytes = fromClient.readInt();
                     int EncryptednumBytes = fromClient.readInt();
-                    byte [] block = new byte[EncryptednumBytes];
+                    byte[] block = new byte[EncryptednumBytes];
                     fromClient.readFully(block, 0, EncryptednumBytes);
+
+                    packet++;
 
                     byte[] decryptedblock = decrypt(block, serverPrivateKey);
 
@@ -82,14 +96,17 @@ public class ServerwithCP1 {
                     if (numBytes < 117) {
 
                         System.out.println("File is received");
+                        System.out.println("Total packets: " + packet);
 
-                        if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
-                        if (bufferedFileOutputStream != null) fileOutputStream.close();
+                        if (bufferedFileOutputStream != null)
+                            bufferedFileOutputStream.close();
+                        if (bufferedFileOutputStream != null)
+                            fileOutputStream.close();
 
                     }
                 }
-                //If packet is requesting encrypted nonce
-                else if (packetType==2){
+                // If packet is requesting encrypted nonce
+                else if (packetType == 2) {
                     System.out.println("client requested for authentication");
                     String nonce = fromClient.readUTF();
                     System.out.println(nonce);
@@ -98,13 +115,13 @@ public class ServerwithCP1 {
                     toClient.write(encryptednonce);
                     System.out.println("sent encrypted nonce");
                 }
-                //If packet is requesting for server certificate
-                else if (packetType==3){
+                // If packet is requesting for server certificate
+                else if (packetType == 3) {
                     System.out.println("client requested for certificate");
                     toClient.writeUTF(Base64.getEncoder().encodeToString(ServerCert.getEncoded()));
                 }
-                //If packet sends data that client closed connection
-                else if (packetType==4){
+                // If packet sends data that client closed connection
+                else if (packetType == 4) {
                     System.out.println("Closing connection...");
                     fromClient.close();
                     toClient.close();
@@ -113,7 +130,9 @@ public class ServerwithCP1 {
                 }
 
             }
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -134,11 +153,12 @@ public class ServerwithCP1 {
         // decrypt message
         return decipher.doFinal(byteArray);
     }
+
     public static boolean isNumeric(String str) {
         try {
             Double.parseDouble(str);
             return true;
-        } catch(NumberFormatException e){
+        } catch (NumberFormatException e) {
             return false;
         }
     }

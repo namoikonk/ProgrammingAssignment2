@@ -19,30 +19,33 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
-
 public class ClientwithCP1 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
         // get CA's public key for verification
-        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
+        InputStream fis = new FileInputStream(
+                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/cacsertificate.crt");
+        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
         X509Certificate CAcert = getCertificate(fis);
         PublicKey CAKey = CAcert.getPublicKey();
 
-        /*String filename = "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\500.txt";
-        if (args.length > 0)
-            filename = args[0];*/
+        /*
+         * String filename =
+         * "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\500.txt";
+         * if (args.length > 0) filename = args[0];
+         */
 
         String serverAddress = "localhost";
-        /*if (args.length > 1)
-            filename = args[1];*/
+        /*
+         * if (args.length > 1) filename = args[1];
+         */
 
         int port = 8080;
-        for(int i = 0; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             if (args[i].equals("port")) {
                 port = Integer.parseInt(args[i + 1]);
             }
         }
-
 
         int numBytes = 0;
 
@@ -112,7 +115,7 @@ public class ClientwithCP1 {
 
             for (int i = 0; i < args.length; i++) {
                 System.out.println("Sending file...");
-                if(args[i].equals("port")){
+                if (args[i].equals("port")) {
                     toServer.writeInt(4);
                     bufferedFileInputStream.close();
                     fileInputStream.close();
@@ -133,9 +136,8 @@ public class ClientwithCP1 {
 
                 byte[] fromFileBuffer = new byte[117];
 
-
                 // send the file
-                for (boolean fileEnded = false; !fileEnded; ) {
+                for (boolean fileEnded = false; !fileEnded;) {
                     numBytes = bufferedFileInputStream.read(fromFileBuffer);
                     fileEnded = numBytes < 117;
 
@@ -151,7 +153,6 @@ public class ClientwithCP1 {
                     toServer.write(encryptedfromFileBuffer);
                     toServer.flush();
 
-
                 }
                 System.out.println("File sent");
 
@@ -163,7 +164,6 @@ public class ClientwithCP1 {
                 }
 
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -218,6 +218,5 @@ public class ClientwithCP1 {
     public static boolean equalsNonce(byte[] nonce, byte[] decryptedNonce) {
         return Arrays.equals(nonce, decryptedNonce);
     }
-
 
 }

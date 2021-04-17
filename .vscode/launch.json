@@ -1,0 +1,56 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch ClientWithoutSecurity",
+            "request": "launch",
+            "mainClass": "ClientWithoutSecurity",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        },
+        {
+            "type": "java",
+            "name": "Launch ClientwithCP1",
+            "request": "launch",
+            "mainClass": "ClientwithCP1",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        },
+        {
+            "type": "java",
+            "name": "Launch ClientwithCP2",
+            "request": "launch",
+            "mainClass": "ClientwithCP2",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        },
+        {
+            "type": "java",
+            "name": "Launch ServerWithoutSecurity",
+            "request": "launch",
+            "mainClass": "ServerWithoutSecurity",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        },
+        {
+            "type": "java",
+            "name": "Launch ServerwithCP1",
+            "request": "launch",
+            "mainClass": "ServerwithCP1",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        },
+        {
+            "type": "java",
+            "name": "Launch ServerwithCP2",
+            "request": "launch",
+            "mainClass": "ServerwithCP2",
+            "projectName": "ProgrammingAssignment2_d847ba5c"
+        }
+    ]
+}
