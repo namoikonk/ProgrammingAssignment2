@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
-public class ClientwithCP1 {
+public class ClientwithCP2 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
         // get CA's public key for verification
