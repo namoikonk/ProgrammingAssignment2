@@ -145,7 +145,7 @@ public class ClientwithCP2 {
 
                 byte[] fromFileBuffer = new byte[117];
 
-
+                int packet = 0;
                 // send the file
                 for (boolean fileEnded = false; !fileEnded; ) {
                     numBytes = bufferedFileInputStream.read(fromFileBuffer);
@@ -162,18 +162,22 @@ public class ClientwithCP2 {
                     toServer.writeInt(encyrptednumBytes);
                     toServer.write(encryptedfromFileBuffer);
                     toServer.flush();
+                    packet++;
 
                 }
                 System.out.println("File sent");
-
-                if (i == args.length - 1) {
-                    System.out.println("Closing connection...");
-                    toServer.writeInt(4);
-                    bufferedFileInputStream.close();
-                    fileInputStream.close();
-                }
+                System.out.println("Packets: " + packet);
 
             }
+            int termination =0;
+            System.out.println("Server is still writing file...");
+            while(termination!=20){
+                termination = fromServer.readInt();
+            }
+            System.out.println("Closing connection...");
+            toServer.writeInt(4);
+            bufferedFileInputStream.close();
+            fileInputStream.close();
 
         } catch (Exception e) {
             e.printStackTrace();

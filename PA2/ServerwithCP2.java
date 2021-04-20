@@ -86,6 +86,8 @@ public class ServerwithCP2 {
 
                     if (numBytes < 117) {
 
+                        toClient.writeInt(20);
+
                         System.out.println("File is received");
 
                         if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();

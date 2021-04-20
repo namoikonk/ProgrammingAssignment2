@@ -162,12 +162,7 @@ public class ClientwithCP1 {
 
 
                 }
-                /*if (i == args.length - 1) {
-                    //send an end-of-file packet
-                    toServer.writeInt(4);
-                    bufferedFileInputStream.close();
-                    fileInputStream.close();
-                }*/
+
                 System.out.println("File sent");
                 System.out.println("Packets: " + packet);
 
