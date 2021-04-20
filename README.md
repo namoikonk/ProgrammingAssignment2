@@ -8,6 +8,7 @@ How to send file (for CP1):
 2. Compile with javac for both codes
 3. Run server code first with java ServerwithCP1
 4. Run client code with file you want to send: java ClientwithCP1.java [absolute filepath of file you want to send] port 4321
+   For multiple files, add as many absolute filepaths as needed
 5. Results shown in cmd prompt and received file is called 'recv\_[file name]'
 
 Same for CP2
