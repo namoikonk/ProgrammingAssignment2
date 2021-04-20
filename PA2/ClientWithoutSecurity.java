@@ -3,25 +3,22 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.net.Socket;
-import java.io.*;
-import java.nio.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.*;
-import java.security.spec.*;
 
 public class ClientWithoutSecurity {
 
 	public static void main(String[] args) {
 
 		String filename = "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\100000.txt";
-		if (args.length > 0) filename = args[0];
+		if (args.length > 0)
+			filename = args[0];
 
 		String serverAddress = "localhost";
-		if (args.length > 1) filename = args[1];
+		if (args.length > 1)
+			filename = args[1];
 
 		int port = 4321;
-		if (args.length > 2) port = Integer.parseInt(args[2]);
+		if (args.length > 2)
+			port = Integer.parseInt(args[2]);
 
 		int numBytes = 0;
 
@@ -50,7 +47,7 @@ public class ClientWithoutSecurity {
 			toServer.writeInt(0);
 			toServer.writeInt(filename.getBytes().length);
 			toServer.write(filename.getBytes());
-			//toServer.flush();
+			// toServer.flush();
 
 			// Open the file
 			fileInputStream = new FileInputStream(filename);
@@ -59,7 +56,7 @@ public class ClientWithoutSecurity {
 			byte[] fromFileBuffer = new byte[117];
 
 			// Send the file
-			for (boolean fileEnded = false; !fileEnded; ) {
+			for (boolean fileEnded = false; !fileEnded;) {
 				numBytes = bufferedFileInputStream.read(fromFileBuffer);
 				fileEnded = numBytes < 117;
 
@@ -82,4 +79,3 @@ public class ClientWithoutSecurity {
 		System.out.println("Program took: " + timeTaken / 1000000.0 + "ms to run");
 	}
 }
-

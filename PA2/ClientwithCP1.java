@@ -5,16 +5,10 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.net.Socket;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.security.spec.*;
-import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
@@ -41,7 +35,7 @@ public class ClientwithCP1 {
          */
 
         int port = 4321;
-        for(int i = 0; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             if (args[i].equals("port")) {
                 port = Integer.parseInt(args[i + 1]);
             }
@@ -115,12 +109,11 @@ public class ClientwithCP1 {
 
             for (int i = 0; i < args.length; i++) {
 
-
                 System.out.println("Sending file...");
 
                 String filename = args[i];
 
-                if(args[i].equals("port")){
+                if (args[i].equals("port")) {
                     toServer.writeInt(4);
                     bufferedFileInputStream.close();
                     fileInputStream.close();
@@ -143,8 +136,7 @@ public class ClientwithCP1 {
                 // send the file
                 for (boolean fileEnded = false; !fileEnded;) {
                     numBytes = bufferedFileInputStream.read(fromFileBuffer);
-                    fileEnded = numBytes <117;
-
+                    fileEnded = numBytes < 117;
 
                     toServer.writeInt(1);
                     toServer.writeInt(numBytes);
@@ -155,11 +147,10 @@ public class ClientwithCP1 {
 
                     // send encrypted file
                     toServer.writeInt(encyrptednumBytes);
-                    toServer.write(encryptedfromFileBuffer,0,encyrptednumBytes);
+                    toServer.write(encryptedfromFileBuffer, 0, encyrptednumBytes);
                     toServer.flush();
 
                     packet++;
-
 
                 }
 
@@ -168,10 +159,9 @@ public class ClientwithCP1 {
 
             }
 
-
-            int termination =0;
+            int termination = 0;
             System.out.println("Server is still writing file...");
-            while(termination!=20){
+            while (termination != 20) {
                 termination = fromServer.readInt();
             }
 

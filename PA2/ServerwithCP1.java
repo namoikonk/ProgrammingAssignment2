@@ -19,7 +19,9 @@ public class ServerwithCP1 {
     public static void main(String[] args) throws Exception {
 
         int port = 4321;
-        if (args.length > 0) {port = Integer.parseInt(args[0]);}
+        if (args.length > 0) {
+            port = Integer.parseInt(args[0]);
+        }
 
         ServerSocket welcomeSocket = null;
         Socket connectionSocket = null;
@@ -29,8 +31,10 @@ public class ServerwithCP1 {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedFileOutputStream = null;
 
-        //obtain server certificate
-        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
+        // obtain server certificate
+        InputStream fis = new FileInputStream(
+                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/certificate_1004286.crt");
+        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
         X509Certificate ServerCert = getCertificate(fis);
         System.out.println(ServerCert.getPublicKey());
         // PublicKey serverPublicKey;
@@ -78,29 +82,26 @@ public class ServerwithCP1 {
                     }
 
                     // If the packet is for transferring a chunk of the file
-                } if (packetType == 1) {
+                }
+                if (packetType == 1) {
 
                     int numBytes = fromClient.readInt();
                     int EncryptednumBytes = fromClient.readInt();
 
-
                     byte[] block = new byte[EncryptednumBytes];
                     fromClient.readFully(block, 0, EncryptednumBytes);
-                    //byte[] block = new byte[numBytes];
-                    //fromClient.readFully(block,0,numBytes);
-
+                    // byte[] block = new byte[numBytes];
+                    // fromClient.readFully(block,0,numBytes);
 
                     packet++;
 
                     byte[] decryptedblock = decrypt(block, serverPrivateKey);
 
-                    //System.out.println(decryptedblock.length);
-
+                    // System.out.println(decryptedblock.length);
 
                     if (numBytes > 0) {
-                        //connectionSocket.setKeepAlive(true);
-                        bufferedFileOutputStream.write(decryptedblock,0,numBytes);
-
+                        // connectionSocket.setKeepAlive(true);
+                        bufferedFileOutputStream.write(decryptedblock, 0, numBytes);
 
                     }
                     if (numBytes < 117) {
@@ -110,9 +111,7 @@ public class ServerwithCP1 {
                             bufferedFileOutputStream.close();
                             fileOutputStream.close();
 
-
                         }
-
 
                     }
                 }
@@ -142,9 +141,9 @@ public class ServerwithCP1 {
 
             }
 
-
-
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -174,6 +173,7 @@ public class ServerwithCP1 {
             return false;
         }
     }
+
     public static X509Certificate getCertificate(InputStream is) throws CertificateException {
         X509Certificate CAcert = null;
         try {

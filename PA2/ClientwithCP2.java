@@ -24,20 +24,25 @@ public class ClientwithCP2 {
     public static void main(String[] args) throws FileNotFoundException, CertificateException {
 
         // get CA's public key for verification
-        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
+        InputStream fis = new FileInputStream(
+                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/cacsertificate.crt");
+        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\cacsertificate.crt");
         X509Certificate CAcert = getCertificate(fis);
         PublicKey CAKey = CAcert.getPublicKey();
 
-        /*String filename = "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\500.txt";
-        if (args.length > 0)
-            filename = args[0];*/
+        /*
+         * String filename =
+         * "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\500.txt";
+         * if (args.length > 0) filename = args[0];
+         */
 
         String serverAddress = "localhost";
-        /*if (args.length > 1)
-            filename = args[1];*/
+        /*
+         * if (args.length > 1) filename = args[1];
+         */
 
-        int port = 8080;
-        for(int i = 0; i < args.length; i++) {
+        int port = 4321;
+        for (int i = 0; i < args.length; i++) {
             if (args[i].equals("port")) {
                 port = Integer.parseInt(args[i + 1]);
             }
@@ -80,7 +85,7 @@ public class ClientwithCP2 {
             toServer.writeInt(3);
             System.out.println("Requesting server certificate");
             String certString = fromServer.readUTF();
-            //System.out.println(certString);
+            // System.out.println(certString);
 
             // create X509Certificate object
             byte[] bytes = Base64.getDecoder().decode(certString);
@@ -110,21 +115,20 @@ public class ClientwithCP2 {
 
             System.out.println("Establishing connection to server...");
 
-            //get AES Key
+            // get AES Key
             Key AESKey = getKey();
             String symmetric_key = Base64.getEncoder().encodeToString(AESKey.getEncoded());
             System.out.println("Symmetric key is: " + symmetric_key);
 
-            //send symmetric key to server
+            // send symmetric key to server
             System.out.println("Sending key to server");
             toServer.writeInt(5);
-            byte [] encryptedAESKey = encrypt(AESKey.getEncoded(),serverPublicKey);
+            byte[] encryptedAESKey = encrypt(AESKey.getEncoded(), serverPublicKey);
             toServer.writeUTF(Base64.getEncoder().encodeToString(encryptedAESKey));
-
 
             for (int i = 0; i < args.length; i++) {
                 System.out.println("Sending file...");
-                if(args[i].equals("port")){
+                if (args[i].equals("port")) {
                     toServer.writeInt(4);
                     bufferedFileInputStream.close();
                     fileInputStream.close();
@@ -147,13 +151,13 @@ public class ClientwithCP2 {
 
                 int packet = 0;
                 // send the file
-                for (boolean fileEnded = false; !fileEnded; ) {
+                for (boolean fileEnded = false; !fileEnded;) {
                     numBytes = bufferedFileInputStream.read(fromFileBuffer);
                     fileEnded = numBytes < 117;
 
                     toServer.writeInt(1);
 
-                     // encrypt file
+                    // encrypt file
                     byte[] encryptedfromFileBuffer = encrypt2(fromFileBuffer, AESKey);
                     int encyrptednumBytes = encryptedfromFileBuffer.length;
 
@@ -169,9 +173,9 @@ public class ClientwithCP2 {
                 System.out.println("Packets: " + packet);
 
             }
-            int termination =0;
+            int termination = 0;
             System.out.println("Server is still writing file...");
-            while(termination!=20){
+            while (termination != 20) {
                 termination = fromServer.readInt();
             }
             System.out.println("Closing connection...");
@@ -232,7 +236,8 @@ public class ClientwithCP2 {
     public static boolean equalsNonce(byte[] nonce, byte[] decryptedNonce) {
         return Arrays.equals(nonce, decryptedNonce);
     }
-    public static Key getKey () {
+
+    public static Key getKey() {
         Key key = null;
         try {
 
@@ -249,6 +254,7 @@ public class ClientwithCP2 {
 
         return key;
     }
+
     public static byte[] encrypt2(byte[] byteArray, Key key) throws Exception {
         // instantiate cipher
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -257,6 +263,5 @@ public class ClientwithCP2 {
         // encrypt message
         return cipher.doFinal(byteArray);
     }
-
 
 }
