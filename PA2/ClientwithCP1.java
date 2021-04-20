@@ -40,8 +40,8 @@ public class ClientwithCP1 {
          * if (args.length > 1) filename = args[1];
          */
 
-        int port = 8080;
-        for (int i = 0; i < args.length; i++) {
+        int port = 4321;
+        for(int i = 0; i < args.length; i++) {
             if (args[i].equals("port")) {
                 port = Integer.parseInt(args[i + 1]);
             }
@@ -71,14 +71,14 @@ public class ClientwithCP1 {
             // send nonce to server and request for encrypted nonce
             toServer.writeInt(2);
             Random rand = new Random();
-            String nonce = generateString(rand, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
+            String nonce = generateString(rand, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", rand.nextInt(10));
             System.out.println(nonce);
             toServer.writeUTF(nonce);
 
             // receive encrypted nonce with server's private key
             byte[] encryptednonce = new byte[128];
-            int no_bytes_read = fromServer.read(encryptednonce);
-            System.out.println(no_bytes_read);
+            int num_bytes = fromServer.read(encryptednonce);
+            System.out.println(num_bytes);
 
             // ask for signed certificate
             toServer.writeInt(3);
@@ -114,15 +114,18 @@ public class ClientwithCP1 {
             System.out.println("Establishing connection to server...");
 
             for (int i = 0; i < args.length; i++) {
+
+
                 System.out.println("Sending file...");
-                if (args[i].equals("port")) {
+
+                String filename = args[i];
+
+                if(args[i].equals("port")){
                     toServer.writeInt(4);
                     bufferedFileInputStream.close();
                     fileInputStream.close();
                     break;
                 }
-
-                String filename = args[i];
 
                 // send the filename
                 toServer.writeInt(0);
@@ -136,34 +139,51 @@ public class ClientwithCP1 {
 
                 byte[] fromFileBuffer = new byte[117];
 
+                int packet = 0;
                 // send the file
                 for (boolean fileEnded = false; !fileEnded;) {
                     numBytes = bufferedFileInputStream.read(fromFileBuffer);
-                    fileEnded = numBytes < 117;
+                    fileEnded = numBytes <117;
+
 
                     toServer.writeInt(1);
+                    toServer.writeInt(numBytes);
 
                     // encrypt file
                     byte[] encryptedfromFileBuffer = encrypt(fromFileBuffer, serverPublicKey);
                     int encyrptednumBytes = encryptedfromFileBuffer.length;
 
                     // send encrypted file
-                    toServer.writeInt(numBytes);
                     toServer.writeInt(encyrptednumBytes);
-                    toServer.write(encryptedfromFileBuffer);
+                    toServer.write(encryptedfromFileBuffer,0,encyrptednumBytes);
                     toServer.flush();
 
-                }
-                System.out.println("File sent");
+                    packet++;
 
-                if (i == args.length - 1) {
-                    System.out.println("Closing connection...");
+
+                }
+                /*if (i == args.length - 1) {
+                    //send an end-of-file packet
                     toServer.writeInt(4);
                     bufferedFileInputStream.close();
                     fileInputStream.close();
-                }
+                }*/
+                System.out.println("File sent");
+                System.out.println("Packets: " + packet);
 
             }
+
+
+            int termination =0;
+            System.out.println("Server is still writing file...");
+            while(termination!=20){
+                termination = fromServer.readInt();
+            }
+
+            System.out.println("Closing connection...");
+            toServer.writeInt(4);
+            bufferedFileInputStream.close();
+            fileInputStream.close();
 
         } catch (Exception e) {
             e.printStackTrace();

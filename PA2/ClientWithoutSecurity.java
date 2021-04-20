@@ -14,7 +14,7 @@ public class ClientWithoutSecurity {
 
 	public static void main(String[] args) {
 
-		String filename = "100.txt";
+		String filename = "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\100000.txt";
 		if (args.length > 0) filename = args[0];
 
 		String serverAddress = "localhost";

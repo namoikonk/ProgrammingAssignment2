@@ -2,10 +2,14 @@ import javax.crypto.Cipher;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
@@ -14,10 +18,8 @@ public class ServerwithCP1 {
 
     public static void main(String[] args) throws Exception {
 
-        int port = 8080;
-        if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-        }
+        int port = 4321;
+        if (args.length > 0) {port = Integer.parseInt(args[0]);}
 
         ServerSocket welcomeSocket = null;
         Socket connectionSocket = null;
@@ -27,12 +29,9 @@ public class ServerwithCP1 {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedFileOutputStream = null;
 
-        // obtain server certificate
-        InputStream fis = new FileInputStream(
-                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/certificate_1004286.crt");
-        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_100428");
-
-        X509Certificate ServerCert = ClientwithCP1.getCertificate(fis);
+        //obtain server certificate
+        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
+        X509Certificate ServerCert = getCertificate(fis);
         System.out.println(ServerCert.getPublicKey());
         // PublicKey serverPublicKey;
         // serverPublicKey =
@@ -79,29 +78,41 @@ public class ServerwithCP1 {
                     }
 
                     // If the packet is for transferring a chunk of the file
-                } else if (packetType == 1) {
+                } if (packetType == 1) {
 
                     int numBytes = fromClient.readInt();
                     int EncryptednumBytes = fromClient.readInt();
+
+
                     byte[] block = new byte[EncryptednumBytes];
                     fromClient.readFully(block, 0, EncryptednumBytes);
+                    //byte[] block = new byte[numBytes];
+                    //fromClient.readFully(block,0,numBytes);
+
 
                     packet++;
 
                     byte[] decryptedblock = decrypt(block, serverPrivateKey);
 
-                    if (numBytes > 0)
-                        bufferedFileOutputStream.write(decryptedblock, 0, numBytes);
+                    //System.out.println(decryptedblock.length);
 
+
+                    if (numBytes > 0) {
+                        //connectionSocket.setKeepAlive(true);
+                        bufferedFileOutputStream.write(decryptedblock,0,numBytes);
+
+
+                    }
                     if (numBytes < 117) {
-
+                        toClient.writeInt(20);
                         System.out.println("File is received");
-                        System.out.println("Total packets: " + packet);
-
-                        if (bufferedFileOutputStream != null)
+                        if (bufferedFileOutputStream != null) {
                             bufferedFileOutputStream.close();
-                        if (bufferedFileOutputStream != null)
                             fileOutputStream.close();
+
+
+                        }
+
 
                     }
                 }
@@ -130,9 +141,10 @@ public class ServerwithCP1 {
                 }
 
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+
+
+        } catch (Exception e) {e.printStackTrace();}
 
     }
 
@@ -161,6 +173,19 @@ public class ServerwithCP1 {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+    public static X509Certificate getCertificate(InputStream is) throws CertificateException {
+        X509Certificate CAcert = null;
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            CAcert = (X509Certificate) cf.generateCertificate(is);
+
+        } catch (CertificateException e) {
+            System.out.println("Certificate expired");
+
+        }
+
+        return CAcert;
     }
 
 }

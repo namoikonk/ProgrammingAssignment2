@@ -19,9 +19,7 @@ public class ServerwithCP2 {
     public static void main(String[] args) throws Exception {
 
         int port = 8080;
-        if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-        }
+        if (args.length > 0) {port = Integer.parseInt(args[0]);}
 
         ServerSocket welcomeSocket = null;
         Socket connectionSocket = null;
@@ -31,33 +29,26 @@ public class ServerwithCP2 {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedFileOutputStream = null;
 
-        // obtain server certificate
-        InputStream fis = new FileInputStream(
-                "C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/certificate_1004286.crt");
-        // "C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_100428");
-
+        //obtain server certificate
+        InputStream fis = new FileInputStream("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\certificate_1004286.crt");
         X509Certificate ServerCert = ClientwithCP1.getCertificate(fis);
         System.out.println(ServerCert.getPublicKey());
-        // PublicKey serverPublicKey;
-        // serverPublicKey =
-        // PublicKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\public_key.der");
-        // System.out.println(serverPublicKey);
+//        PublicKey serverPublicKey;
+//        serverPublicKey = PublicKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\public_key.der");
+//        System.out.println(serverPublicKey);
 
-        // extract private key from file
+
+        //extract private key from file
         PrivateKey serverPrivateKey;
-        serverPrivateKey = PrivateKeyReader
-                .get("C:/Users/User/Documents/GitHub/ProgrammingAssignment2/PA2/docs2/private_key.der");
-        // .get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\private_key.der");
+        serverPrivateKey = PrivateKeyReader.get("C:\\Users\\dksat\\Documents\\GitHub\\ProgrammingAssignment2\\PA2\\docs2\\private_key.der");
+        //System.out.println(serverPrivateKey);
 
-        // System.out.println(serverPrivateKey);
 
         try {
             welcomeSocket = new ServerSocket(port);
             connectionSocket = welcomeSocket.accept();
             fromClient = new DataInputStream(connectionSocket.getInputStream());
             toClient = new DataOutputStream(connectionSocket.getOutputStream());
-
-            int packet = 0;
 
             while (!connectionSocket.isClosed()) {
 
@@ -66,18 +57,15 @@ public class ServerwithCP2 {
                 // If the packet is for transferring the filename
                 if (packetType == 0) {
 
-                    packet = 0; // initialize packet size to be 0
                     System.out.println("Receiving file...");
 
                     int numBytes = fromClient.readInt();
-                    byte[] filename = new byte[numBytes];
+                    byte [] filename = new byte[numBytes];
                     // Must use read fully!
-                    // See:
-                    // https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
+                    // See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
                     fromClient.readFully(filename, 0, numBytes);
 
-                    if (!(new String(filename, 0, numBytes)).equals("port")
-                            || !isNumeric(new String(filename, 0, numBytes))) {
+                    if(!(new String(filename, 0, numBytes)).equals("port") || !isNumeric(new String(filename, 0, numBytes))) {
                         File file = new File(new String(filename, 0, numBytes));
                         fileOutputStream = new FileOutputStream("recv_" + file.getName());
                         bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
@@ -88,10 +76,8 @@ public class ServerwithCP2 {
 
                     int numBytes = fromClient.readInt();
                     int EncryptednumBytes = fromClient.readInt();
-                    byte[] block = new byte[EncryptednumBytes];
+                    byte [] block = new byte[EncryptednumBytes];
                     fromClient.readFully(block, 0, EncryptednumBytes);
-
-                    packet++;
 
                     byte[] decryptedblock = decrypt2(block, AESKey);
 
@@ -101,52 +87,47 @@ public class ServerwithCP2 {
                     if (numBytes < 117) {
 
                         System.out.println("File is received");
-                        System.out.println("Total packets: " + packet);
 
-                        if (bufferedFileOutputStream != null)
-                            bufferedFileOutputStream.close();
-                        if (bufferedFileOutputStream != null)
-                            fileOutputStream.close();
+                        if (bufferedFileOutputStream != null) bufferedFileOutputStream.close();
+                        if (bufferedFileOutputStream != null) fileOutputStream.close();
 
                     }
                 }
-                // If packet is requesting encrypted nonce
-                else if (packetType == 2) {
+                //If packet is requesting encrypted nonce
+                else if (packetType==2){
                     System.out.println("client requested for authentication");
                     String nonce = fromClient.readUTF();
                     System.out.println(nonce);
                     byte[] encryptednonce = encrypt(nonce.getBytes(), serverPrivateKey);
-                    // System.out.println(Arrays.toString(encryptednonce));
+                    //System.out.println(Arrays.toString(encryptednonce));
                     toClient.write(encryptednonce);
                     System.out.println("sent encrypted nonce");
                 }
-                // If packet is requesting for server certificate
-                else if (packetType == 3) {
+                //If packet is requesting for server certificate
+                else if (packetType==3){
                     System.out.println("client requested for certificate");
                     toClient.writeUTF(Base64.getEncoder().encodeToString(ServerCert.getEncoded()));
                 }
-                // If packet sends data that client closed connection
-                else if (packetType == 4) {
+                //If packet sends data that client closed connection
+                else if (packetType==4){
                     System.out.println("Closing connection...");
                     fromClient.close();
                     toClient.close();
                     connectionSocket.close();
 
                 }
-                // If packet sends symmetric key
-                if (packetType == 5) {
+                //If packet sends symmetric key
+                if (packetType==5){
                     String symmetric_key = fromClient.readUTF();
                     System.out.println("symmetric key received");
-                    byte[] symkey = decrypt(Base64.getDecoder().decode(symmetric_key), serverPrivateKey);
+                    byte [] symkey = decrypt(Base64.getDecoder().decode(symmetric_key),serverPrivateKey);
                     AESKey = new SecretKeySpec(symkey, 0, symkey.length, "AES");
                     symmetric_key = Base64.getEncoder().encodeToString(AESKey.getEncoded());
                     System.out.println("symKey is: " + symmetric_key);
                 }
 
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {e.printStackTrace();}
 
     }
 
@@ -168,6 +149,7 @@ public class ServerwithCP2 {
         return decipher.doFinal(byteArray);
     }
 
+
     public static byte[] decrypt2(byte[] byteArray, Key key) throws Exception {
         // instantiate cypher
         Cipher decipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -181,7 +163,7 @@ public class ServerwithCP2 {
         try {
             Double.parseDouble(str);
             return true;
-        } catch (NumberFormatException e) {
+        } catch(NumberFormatException e){
             return false;
         }
     }

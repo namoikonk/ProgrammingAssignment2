@@ -1,8 +1,5 @@
 import javax.crypto.Cipher;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.Key;
@@ -46,8 +43,8 @@ public class ServerWithoutSecurity {
 					// Must use read fully!
 					// See: https://stackoverflow.com/questions/25897627/datainputstream-read-vs-datainputstream-readfully
 					fromClient.readFully(filename, 0, numBytes);
-
-					fileOutputStream = new FileOutputStream("recv_"+new String(filename, 0, numBytes));
+					File file = new File(new String(filename, 0, numBytes));
+					fileOutputStream = new FileOutputStream("recv_"+file.getName());
 					bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
 
 				// If the packet is for transferring a chunk of the file
@@ -58,6 +55,7 @@ public class ServerWithoutSecurity {
 					fromClient.readFully(block, 0, numBytes);
 
 					if (numBytes > 0)
+
 						bufferedFileOutputStream.write(block, 0, numBytes);
 
 					if (numBytes < 117) {
